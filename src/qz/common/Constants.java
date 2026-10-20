@@ -31,24 +31,24 @@ public class Constants {
 
     public static final int BORDER_PADDING = 10;
 
-    public static final String ABOUT_TITLE = "QZ Tray";
-    public static final String ABOUT_EMAIL = "support@qz.io";
-    public static final String ABOUT_URL = "https://qz.io";
-    public static final String ABOUT_COMPANY = "QZ Industries, LLC";
-    public static final String ABOUT_CITY = "Canastota";
-    public static final String ABOUT_STATE = "NY";
-    public static final String ABOUT_COUNTRY = "US";
+    public static final String ABOUT_TITLE = "e-flow print";
+    public static final String ABOUT_EMAIL = "wms@ectaro.com";
+    public static final String ABOUT_URL = "https://wms.ectaro.com";
+    public static final String ABOUT_COMPANY = "Ectaro B.V.";
+    public static final String ABOUT_CITY = "Dordrecht";
+    public static final String ABOUT_STATE = "";
+    public static final String ABOUT_COUNTRY = "NL";
 
-    public static final String ABOUT_LICENSING_URL = Constants.ABOUT_URL + "/licensing";
-    public static final String ABOUT_SUPPORT_URL = Constants.ABOUT_URL + "/support";
-    public static final String ABOUT_PRIVACY_URL = Constants.ABOUT_URL + "/privacy";
-    public static final String ABOUT_DOWNLOAD_URL = Constants.ABOUT_URL + "/download";
+    public static final String ABOUT_LICENSING_URL = "https://github.com/ectaroship/e-flow-print";
+    public static final String ABOUT_SUPPORT_URL = Constants.ABOUT_URL;
+    public static final String ABOUT_PRIVACY_URL = Constants.ABOUT_URL;
+    public static final String ABOUT_DOWNLOAD_URL = "https://github.com/ectaroship/e-flow-print/releases";
 
-    public static final String VERSION_CHECK_URL = "https://api.github.com/repos/qzind/tray/releases";
-    public static final String VERSION_DOWNLOAD_URL = "https://github.com/qzind/tray/releases";
+    public static final String VERSION_CHECK_URL = "https://api.github.com/repos/ectaroship/e-flow-print/releases";
+    public static final String VERSION_DOWNLOAD_URL = "https://github.com/ectaroship/e-flow-print/releases";
     public static final boolean ENABLE_DIAGNOSTICS = true; // Diagnostics menu (logs, etc)
 
-    public static final String BRAND_COLOR_HEX = "#44aa53";
+    public static final String BRAND_COLOR_HEX = "#6c1d5a";
     @SuppressWarnings("ConstantValue")
     public static final boolean IS_REBRANDED = !ABOUT_EMAIL.equals("support@qz.io");
 
