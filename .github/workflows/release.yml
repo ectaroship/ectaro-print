@@ -1,0 +1,86 @@
+name: Release Ectaro Print
+
+# Builds the Windows installers (prod + dev) of Ectaro Print from the tagged
+# commit and publishes them as a GitHub Release. WMS-634 / ADR-0045 (g): this
+# repository builds and hosts the installer; Ectaro Flow only keeps the
+# server's copy of the certificates.
+#
+#   git tag -a ectaro-print-2.3.0-N -m "…" && git push origin ectaro-print-2.3.0-N
+#
+# The prod asset has a stable name, so
+#   https://github.com/ectaroship/ectaro-print/releases/latest/download/ectaro-print-x86_64.exe
+# always serves the newest release. workflow_dispatch re-runs a tag (e.g. after
+# a flaky download of QZ's bundled Java runtime): the release's assets are
+# replaced.
+on:
+  push:
+    tags:
+      - "ectaro-print-*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to (re)build and publish, e.g. ectaro-print-2.3.0-2"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      # QZ 2.3.0 compiles for Java 25 (javac.target=25); ectaro/build.sh refuses older.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Install ant and NSIS
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ant nsis
+
+      - name: Build prod
+        run: ectaro/build.sh --env prod "$RUNNER_TEMP/dist"
+
+      - name: Build dev
+        run: ectaro/build.sh --env dev "$RUNNER_TEMP/dist"
+
+      - name: Publish the release
+        run: |
+          set -euo pipefail
+          dist="$RUNNER_TEMP/dist"
+          prod="$dist/ectaro-print-x86_64.exe"
+          dev="$dist/ectaro-print-x86_64-dev.exe"
+          sha=$(git rev-parse HEAD)
+          {
+            echo "Ectaro Print installer for Windows (x86_64), built from commit \`$sha\` by this workflow."
+            echo
+            echo "- \`ectaro-print-x86_64.exe\` — production (Ectaro Flow and Ectaroship). Not code-signed: Windows shows \"Windows protected your PC\" → More info → Run anyway."
+            echo "- \`ectaro-print-x86_64-dev.exe\` — dev build, for a developer's own machine only (its signing key is public)."
+            echo
+            echo "SHA-256:"
+            echo '```'
+            (cd "$dist" && sha256sum ectaro-print-x86_64.exe ectaro-print-x86_64-dev.exe)
+            (cd ectaro/certs && sha256sum ./*.crt | sed 's#\./#ectaro/certs/#')
+            echo '```'
+          } > "$RUNNER_TEMP/notes.md"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$prod" "$dev" --clobber
+            gh release edit "$TAG" --notes-file "$RUNNER_TEMP/notes.md" --latest
+          else
+            gh release create "$TAG" "$prod" "$dev" \
+              --title "Ectaro Print $TAG" \
+              --notes-file "$RUNNER_TEMP/notes.md" \
+              --verify-tag \
+              --latest
+          fi

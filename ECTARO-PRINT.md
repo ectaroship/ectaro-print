@@ -41,8 +41,9 @@ and the agent does not come back after a reboot).
 
 ## Building
 
-The installer is built by Ectaro Flow's `print-agent/build.sh`, which checks out a tag of this
-repository and passes the trust certificates and a provisioning file to the standard QZ Tray build:
+The installer is built here, by `ectaro/build.sh` (locally) and `.github/workflows/release.yml`
+(on every `ectaro-print-*` tag, published as a GitHub Release — see `ectaro/README.md`). It passes
+the trust certificates and a provisioning file, both in `ectaro/`, to the standard QZ Tray build:
 
 ```
 ant -Dauthcert.use=<root.crt> -Dwhitelist.use=<site.crt> -Dprovision.file=<provision.json> \

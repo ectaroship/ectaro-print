@@ -1,0 +1,9 @@
+[
+	{
+		"description": "WMS-624 (ADR-0045), DEV BUILD: listen on this PC only, accept only the local web app (pnpm dev), no file, host or demo features",
+		"type": "property",
+		"phase": "certgen",
+		"os": "*",
+		"data": "security.wss.host=127.0.0.1|security.wss.alloworigin=http://localhost:5173|security.file.enabled=false|security.print.tohost=false|security.print.tofile=false|security.print.demoassets=false"
+	}
+]
