@@ -23,32 +23,32 @@ public class Constants {
     public static final String ALLOW_FILE = "allowed";
     public static final String TEMP_FILE = "temp";
     public static final String LOG_FILE = "debug";
-    public static final String PROPS_FILE = "qz-tray"; // .properties extension is assumed
+    public static final String PROPS_FILE = "ectaro-print"; // .properties extension is assumed; must equal project.filename (ant/project.properties)
     public static final String PREFS_FILE = "prefs"; // .properties extension is assumed
     public static final String[] PERSIST_PROPS = {"file.whitelist", "file.allow", "networking.hostname", "networking.port", STEAL_WEBSOCKET_PROPERTY };
     public static final String AUTOSTART_FILE = ".autostart";
-    public static final String DATA_DIR = "qz";
+    public static final String DATA_DIR = "ectaro-print"; // must equal vendor.name (ant/project.properties): the installer's silent flag is "${vendor.name}_silent"
 
     public static final int BORDER_PADDING = 10;
 
-    public static final String ABOUT_TITLE = "e-flow print";
+    public static final String ABOUT_TITLE = "Ectaro Print";
     public static final String ABOUT_EMAIL = "wms@ectaro.com";
-    public static final String ABOUT_URL = "https://wms.ectaro.com";
+    public static final String ABOUT_URL = "https://ectaroship.nl";
     public static final String ABOUT_COMPANY = "Ectaro B.V.";
     public static final String ABOUT_CITY = "Dordrecht";
     public static final String ABOUT_STATE = "";
     public static final String ABOUT_COUNTRY = "NL";
 
-    public static final String ABOUT_LICENSING_URL = "https://github.com/ectaroship/e-flow-print";
+    public static final String ABOUT_LICENSING_URL = "https://github.com/ectaroship/ectaro-print";
     public static final String ABOUT_SUPPORT_URL = Constants.ABOUT_URL;
     public static final String ABOUT_PRIVACY_URL = Constants.ABOUT_URL;
-    public static final String ABOUT_DOWNLOAD_URL = "https://github.com/ectaroship/e-flow-print/releases";
+    public static final String ABOUT_DOWNLOAD_URL = "https://github.com/ectaroship/ectaro-print/releases";
 
-    public static final String VERSION_CHECK_URL = "https://api.github.com/repos/ectaroship/e-flow-print/releases";
-    public static final String VERSION_DOWNLOAD_URL = "https://github.com/ectaroship/e-flow-print/releases";
+    public static final String VERSION_CHECK_URL = "https://api.github.com/repos/ectaroship/ectaro-print/releases";
+    public static final String VERSION_DOWNLOAD_URL = "https://github.com/ectaroship/ectaro-print/releases";
     public static final boolean ENABLE_DIAGNOSTICS = true; // Diagnostics menu (logs, etc)
 
-    public static final String BRAND_COLOR_HEX = "#6c1d5a";
+    public static final String BRAND_COLOR_HEX = "#152637";
     @SuppressWarnings("ConstantValue")
     public static final boolean IS_REBRANDED = !ABOUT_EMAIL.equals("support@qz.io");
 

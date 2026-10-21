@@ -47,7 +47,7 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
     private static final String DEMO_CERT_QUESTION = "Create a new demo keypair for %s?\n" +
             "* This keypair will only work on this computer.\n" +
             "* This should only be done by developers.\n" +
-            "* See also https://qz.io/wiki/signing";
+            "* See also https://github.com/ectaroship/ectaro-print";
     private static final String DEMO_CERT_NAME = String.format("%s Demo Cert", Constants.ABOUT_TITLE);
 
     private JSplitPane splitPane;
