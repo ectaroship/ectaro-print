@@ -1,15 +1,18 @@
 name: Release Ectaro Print
 
-# Builds the Windows installers (prod + dev) of Ectaro Print from the tagged
-# commit and publishes them as a GitHub Release. WMS-634 / ADR-0045 (g): this
+# Builds the installers (prod + dev) of Ectaro Print from the tagged commit —
+# Windows x86_64 on Ubuntu, macOS arm64 and x86_64 on a Mac runner (WMS-704) —
+# and publishes them as one GitHub Release. WMS-634 / ADR-0045 (g): this
 # repository builds and hosts the installer; Ectaro Flow only keeps the
 # server's copy of the certificates.
 #
 #   git tag -a ectaro-print-2.3.0-N -m "…" && git push origin ectaro-print-2.3.0-N
 #
-# The prod asset has a stable name, so
+# The prod assets have stable names, so
 #   https://github.com/ectaroship/ectaro-print/releases/latest/download/ectaro-print-x86_64.exe
-# always serves the newest release. workflow_dispatch re-runs a tag (e.g. after
+# (and ectaro-print-macos-arm64.pkg, ectaro-print-macos-x86_64.pkg) always serves
+# the newest release. The Windows job creates the release; the macOS job waits
+# for it, adds its four packages and rewrites the notes so they list every asset. workflow_dispatch re-runs a tag (e.g. after
 # a flaky download of QZ's bundled Java runtime): the release's assets are
 # replaced.
 on:
@@ -84,3 +87,68 @@ jobs:
               --verify-tag \
               --latest
           fi
+
+  macos:
+    name: Build macOS packages
+    needs: release
+    runs-on: macos-latest
+    timeout-minutes: 60
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Install ant
+        run: brew install ant
+
+      # Both architectures are built on this one (arm64) runner: ant only
+      # downloads the other arch's JRE, nothing is executed.
+      - name: Build prod and dev, both architectures
+        run: |
+          set -euo pipefail
+          for env in prod dev; do
+            for arch in aarch64 x86_64; do
+              ectaro/build.sh --env "$env" --os mac --arch "$arch" "$RUNNER_TEMP/dist"
+            done
+          done
+
+      # The notes are regenerated from the files the release will actually hold,
+      # so the exe and pkg SHA lines have one source.
+      - name: Publish the packages
+        run: |
+          set -euo pipefail
+          dist="$RUNNER_TEMP/dist"
+          gh release download "$TAG" -p '*.exe' -D "$dist" --clobber
+          sha=$(git rev-parse HEAD)
+          {
+            echo "Ectaro Print installers, built from commit \`$sha\` by this workflow."
+            echo
+            echo "Windows (x86_64):"
+            echo "- \`ectaro-print-x86_64.exe\` — production (Ectaro Flow and Ectaroship). Not code-signed: Windows shows \"Windows protected your PC\" → More info → Run anyway."
+            echo "- \`ectaro-print-x86_64-dev.exe\` — dev build, for a developer's own machine only (its signing key is public)."
+            echo
+            echo "macOS (not signed or notarised):"
+            echo "- \`ectaro-print-macos-arm64.pkg\` — production, Apple Silicon (M1 and later)."
+            echo "- \`ectaro-print-macos-x86_64.pkg\` — production, Intel Mac."
+            echo "- \`ectaro-print-macos-arm64-dev.pkg\`, \`ectaro-print-macos-x86_64-dev.pkg\` — dev builds, for a developer's own machine only (their signing key is public)."
+            echo "- macOS refuses an unsigned package at first: System Settings → Privacy & Security → Open Anyway. Installing asks for your Mac's administrator password."
+            echo
+            echo "SHA-256:"
+            echo '```'
+            (cd "$dist" && shasum -a 256 ectaro-print-x86_64.exe ectaro-print-x86_64-dev.exe ectaro-print-macos-arm64.pkg ectaro-print-macos-x86_64.pkg ectaro-print-macos-arm64-dev.pkg ectaro-print-macos-x86_64-dev.pkg)
+            (cd ectaro/certs && shasum -a 256 ./*.crt | sed 's#\./#ectaro/certs/#')
+            echo '```'
+          } > "$RUNNER_TEMP/notes.md"
+          gh release upload "$TAG" \
+            "$dist/ectaro-print-macos-arm64.pkg" "$dist/ectaro-print-macos-x86_64.pkg" \
+            "$dist/ectaro-print-macos-arm64-dev.pkg" "$dist/ectaro-print-macos-x86_64-dev.pkg" \
+            --clobber
+          gh release edit "$TAG" --notes-file "$RUNNER_TEMP/notes.md" --latest

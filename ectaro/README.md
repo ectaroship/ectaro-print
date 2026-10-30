@@ -11,11 +11,11 @@ signing key (`QZ_SIGNING_KEY`, which therefore lives in both systems).
 
 | File | What it is |
 |---|---|
-| `build.sh` | Builds the Windows x86_64 installer from the current checkout (`ant … nsis`). |
+| `build.sh` | Builds the Windows x86_64 installer (`ant … nsis`) or a macOS `.pkg` (`ant … pkgbuild`, arm64 or x86_64) from the current checkout. |
 | `certs/prod-root.crt` | **Ectaro Flow Print Root** — the CA the production installer trusts. Its private key is **not** in any of our systems: Yasin keeps it offline; it is needed only to issue a new site certificate. |
 | `certs/prod-site.crt` | **Ectaro Flow** — the site certificate, signed by the root. Its private key is the `QZ_SIGNING_KEY` secret of the signing servers. |
 | `certs/dev-root.crt`, `certs/dev-site.crt` | The dev pair. The dev site key is **public**, so a dev build is for a developer's own machine only. |
-| `provision.json` | Baked into the prod installer: listen on `127.0.0.1` only, accept only the origins in `security.wss.alloworigin`, no file access, no print-to-host / print-to-file, no demo pages. |
+| `provision.json` | Baked into the prod installer: listen on `127.0.0.1` only, `security.wss.httpsonly=true` (no insecure `ws://` port 8182 — every prod origin is https and uses `wss://` on 8181), accept only the origins in `security.wss.alloworigin`, no file access, no print-to-host / print-to-file, no demo pages. |
 | `provision.dev.json` | The same with `http://localhost:5173` only. |
 
 The provisioning files live here and **not** at the repository root: the root `.gitignore`
@@ -33,14 +33,22 @@ ignores `/provision.json`.
 ## Releasing
 
 Pushing a tag `ectaro-print-*` runs `.github/workflows/release.yml`: it builds the prod and
-the dev installer with `ectaro/build.sh` and publishes a GitHub Release with two assets:
+the dev installers with `ectaro/build.sh` and publishes a GitHub Release with six assets. Two jobs:
+Ubuntu builds and creates the release with the Windows installers; a macOS job then builds the
+four packages, uploads them and rewrites the release notes.
 
 | Asset | |
 |---|---|
-| `ectaro-print-x86_64.exe` | Production. The name is stable, so `https://github.com/ectaroship/ectaro-print/releases/latest/download/ectaro-print-x86_64.exe` always serves the newest release. This is what `PRINT_AGENT_DOWNLOAD_URL` in Ectaro Flow points at. |
-| `ectaro-print-x86_64-dev.exe` | Dev build. |
+| `ectaro-print-x86_64.exe` | Windows, production. The name is stable, so `https://github.com/ectaroship/ectaro-print/releases/latest/download/ectaro-print-x86_64.exe` always serves the newest release. |
+| `ectaro-print-macos-arm64.pkg` | macOS on Apple Silicon (M1 and later), production. |
+| `ectaro-print-macos-x86_64.pkg` | macOS on Intel, production. |
+| `ectaro-print-x86_64-dev.exe`, `ectaro-print-macos-arm64-dev.pkg`, `ectaro-print-macos-x86_64-dev.pkg` | Dev builds. |
 
-The release notes carry the source commit and the SHA-256 of both installers and of every
+These names are a contract: Ectaro Flow's `PRINT_AGENT_RELEASE_URL` points at the directory they
+sit in (`…/releases/latest/download/`) and builds the three production links from the names.
+Do not rename them without changing Ectaro Flow.
+
+The release notes carry the source commit and the SHA-256 of every installer and of every
 `ectaro/certs/*.crt`.
 
 ```bash
@@ -56,13 +64,28 @@ Release Ectaro Print → Run workflow** with the tag; the assets are replaced.
 ```bash
 ectaro/build.sh --env prod ./dist     # → ./dist/ectaro-print-x86_64.exe
 ectaro/build.sh --env dev ./dist      # → ./dist/ectaro-print-x86_64-dev.exe
+
+# macOS — on a Mac only (pkgbuild and productbuild)
+ectaro/build.sh --env prod --os mac --arch aarch64 ./dist   # → ./dist/ectaro-print-macos-arm64.pkg
+ectaro/build.sh --env prod --os mac --arch x86_64 ./dist    # → ./dist/ectaro-print-macos-x86_64.pkg
+ectaro/build.sh --env dev --os mac --arch aarch64 ./dist    # → ./dist/ectaro-print-macos-arm64-dev.pkg
 ```
 
-Needs `ant`, `makensis` (NSIS) and a **JDK 25 or newer** (`JAVA_HOME`, or
+`--os` defaults to `windows` and `--arch` to `x86_64` (Windows is x86_64 only). A Mac build
+bundles one Java runtime per architecture, so there is no universal package; either arch can be
+built on either kind of Mac.
+
+Needs `ant`, `makensis` (NSIS, Windows build only) and a **JDK 25 or newer** (`JAVA_HOME`, or
 `/usr/libexec/java_home -v 25+` on a Mac). The first build downloads QZ's bundled Java runtime
 (about 200 MB); the bench PC needs no Java of its own. The installer is **not code-signed**
 (Windows shows "Windows protected your PC" → *More info* → *Run anyway*), and installing needs
-a local administrator.
+a local administrator. The macOS package is not signed or notarised either: macOS refuses it at
+first, and the way through is *System Settings → Privacy & Security → Open Anyway*; installing
+asks for the Mac's administrator password. Once installed it starts when the user logs in (a
+LaunchAgent). Signing and notarisation need an Apple Developer ID and are a later ticket.
+
+macOS limit: two printers with the same name are seen as one — rename or remove the old one in
+*System Settings → Printers*.
 
 ## Adding an origin
 

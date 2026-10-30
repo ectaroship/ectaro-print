@@ -1,9 +1,9 @@
 [
 	{
-		"description": "WMS-624 (ADR-0045): listen on this PC only, accept only the Ectaro Flow and Ectaroship web apps, no file, host or demo features",
+		"description": "WMS-624 (ADR-0045): listen on this PC only, accept only the Ectaro Flow and Ectaroship web apps, no file, host or demo features, and no insecure ws/8182 port",
 		"type": "property",
 		"phase": "certgen",
 		"os": "*",
-		"data": "security.wss.host=127.0.0.1|security.wss.alloworigin=https://wms.ectaro.com,https://app.ectaroship.nl,https://admin.ectaroship.nl|security.file.enabled=false|security.print.tohost=false|security.print.tofile=false|security.print.demoassets=false"
+		"data": "security.wss.host=127.0.0.1|security.wss.alloworigin=https://wms.ectaro.com,https://app.ectaroship.nl,https://admin.ectaroship.nl|security.file.enabled=false|security.print.tohost=false|security.print.tofile=false|security.print.demoassets=false|security.wss.httpsonly=true"
 	}
 ]
